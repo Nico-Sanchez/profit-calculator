@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ganancia BTC</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --paper:#f4f2ee;
+    --card:#ffffff;
+    --ink:#1c1b19;
+    --muted:#8b8780;
+    --line:#e6e3dc;
+    --btc:#f7931a;
+    --up:#0f8a55;
+    --down:#d23f30;
+    --up-bg:rgba(15,138,85,.10);
+    --down-bg:rgba(210,63,48,.10);
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+  }
+  html,body{background:var(--paper);}
+  body{font-family:var(--sans);color:var(--ink);line-height:1.45;-webkit-font-smoothing:antialiased;padding:24px 16px 48px;}
+  .app{max-width:520px;margin:0 auto;}
+
+  header{margin-bottom:22px;}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--btc);}
+  h1{font-size:27px;font-weight:800;letter-spacing:-.02em;margin-top:6px;}
+  .sub{color:var(--muted);font-size:14px;margin-top:6px;max-width:42ch;}
+
+  .ticker{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 1px 0 rgba(0,0,0,.02);}
+  .ticker label{display:block;font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;}
+  .ticker-input{display:flex;align-items:center;border-bottom:2px solid var(--btc);}
+  .ticker-input .usd{font-family:var(--mono);font-size:24px;color:var(--btc);font-weight:600;padding-right:4px;}
+  .ticker-input input{flex:1;min-width:0;border:none;outline:none;background:transparent;font-family:var(--mono);font-size:26px;font-weight:600;color:var(--ink);padding:4px 0;width:100%;}
+
+  .unit{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:0 2px;}
+  .unit-label{font-size:13px;color:var(--muted);}
+  .seg{display:inline-flex;background:#ece9e2;border-radius:9px;padding:3px;}
+  .seg-btn{border:none;background:transparent;font-family:var(--sans);font-size:13px;font-weight:600;color:var(--muted);padding:6px 14px;border-radius:7px;cursor:pointer;transition:background .15s,color .15s;}
+  .seg-btn.active{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08);}
+
+  .row{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;}
+  .row-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .row-title{font-size:13px;font-weight:700;letter-spacing:.02em;}
+  .del{border:none;background:transparent;color:var(--muted);font-size:20px;line-height:1;cursor:pointer;width:26px;height:26px;border-radius:6px;transition:background .15s,color .15s;}
+  .del:hover{background:var(--down-bg);color:var(--down);}
+  .fields{display:flex;gap:10px;}
+  .field{flex:1;min-width:0;}
+  .field label{display:block;font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--muted);text-transform:uppercase;margin-bottom:5px;}
+  .in{display:flex;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:0 10px;transition:border-color .15s;}
+  .in:focus-within{border-color:var(--btc);}
+  .in .pre{font-family:var(--mono);font-size:14px;color:var(--muted);padding-right:5px;}
+  .in input{flex:1;min-width:0;border:none;outline:none;background:transparent;font-family:var(--mono);font-size:16px;color:var(--ink);padding:9px 0;width:100%;}
+  .row-meta{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;gap:10px;}
+  .implied{font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .pnl{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--muted);text-align:right;white-space:nowrap;}
+  .pnl.up{color:var(--up);}
+  .pnl.down{color:var(--down);}
+
+  .add{width:100%;border:1.5px dashed var(--line);background:transparent;color:var(--ink);font-family:var(--sans);font-size:14px;font-weight:600;padding:13px;border-radius:12px;cursor:pointer;margin:4px 0 18px;transition:border-color .15s,background .15s,color .15s;}
+  .add:hover{border-color:var(--btc);color:var(--btc);}
+
+  .totals{background:var(--ink);color:#fff;border-radius:16px;padding:18px 18px 20px;}
+  .t-row{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;}
+  .t-row .k{font-size:13px;color:#b8b4ac;}
+  .t-row .v{font-family:var(--mono);font-size:15px;color:#fff;}
+  .t-div{height:1px;background:rgba(255,255,255,.12);margin:8px 0;}
+  .t-gainrow{display:flex;justify-content:space-between;align-items:baseline;padding-top:6px;}
+  .t-gainrow .k{font-size:14px;font-weight:600;color:#fff;}
+  .t-gainwrap{text-align:right;}
+  .t-gain{font-family:var(--mono);font-size:22px;font-weight:700;color:#fff;}
+  .t-gain.up{color:#4ade80;}
+  .t-gain.down{color:#fb7164;}
+  .t-pct{font-family:var(--mono);font-size:13px;display:block;margin-top:2px;color:#b8b4ac;}
+  .t-pct.up{color:#4ade80;}
+  .t-pct.down{color:#fb7164;}
+  .t-hint{font-size:12px;color:#b8b4ac;margin-top:10px;line-height:1.4;}
+  .t-hint:empty{display:none;margin:0;}
+
+  footer{text-align:center;font-size:12px;color:var(--muted);margin-top:18px;}
+
+  @media (max-width:360px){
+    .fields{flex-direction:column;gap:10px;}
+    h1{font-size:24px;}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+</head>
+<body>
+<main class="app">
+  <header>
+    <div class="eyebrow">₿ Bitcoin</div>
+    <h1>Calculadora de ganancia</h1>
+    <p class="sub">Cargá tus compras y el precio actual. El cálculo se actualiza solo.</p>
+  </header>
+
+  <section class="ticker">
+    <label for="cur">Precio actual de BTC (USD)</label>
+    <div class="ticker-input">
+      <span class="usd">$</span>
+      <input id="cur" type="text" inputmode="decimal" placeholder="65000" autocomplete="off" spellcheck="false">
+    </div>
+  </section>
+
+  <section class="unit">
+    <span class="unit-label">Monto en</span>
+    <div class="seg">
+      <button class="seg-btn" data-unit="usdt" type="button">USDT</button>
+      <button class="seg-btn active" data-unit="btc" type="button">BTC</button>
+    </div>
+  </section>
+
+  <section id="rows"></section>
+
+  <button id="add" class="add" type="button">+ Agregar compra</button>
+
+  <section class="totals">
+    <div class="t-row"><span class="k">Total invertido</span><span class="v" id="t-inv">—</span></div>
+    <div class="t-row"><span class="k">Valor actual</span><span class="v" id="t-now">—</span></div>
+    <div class="t-div"></div>
+    <div class="t-gainrow">
+      <span class="k">Ganancia</span>
+      <span class="t-gainwrap">
+        <span class="t-gain" id="t-gain">—</span>
+        <span class="t-pct" id="t-pct"></span>
+      </span>
+    </div>
+    <div class="t-hint" id="t-hint"></div>
+  </section>
+
+  <footer>Cálculo de referencia. No incluye comisiones.</footer>
+</main>
+
+<template id="row-tpl">
+  <div class="row">
+    <div class="row-head">
+      <span class="row-title">Compra</span>
+      <button class="del" type="button" aria-label="Eliminar compra">×</button>
+    </div>
+    <div class="fields">
+      <div class="field">
+        <label>Precio de compra</label>
+        <div class="in"><span class="pre">$</span><input class="buy" type="text" inputmode="decimal" placeholder="60000" autocomplete="off" spellcheck="false"></div>
+      </div>
+      <div class="field">
+        <label class="amt-label">Cantidad (BTC)</label>
+        <div class="in"><span class="pre amt-pre">₿</span><input class="amt" type="text" inputmode="decimal" placeholder="0.001" autocomplete="off" spellcheck="false"></div>
+      </div>
+    </div>
+    <div class="row-meta">
+      <span class="implied"></span>
+      <span class="pnl">—</span>
+    </div>
+  </div>
+</template>
+
+<script>
+  var rowsEl = document.getElementById('rows');
+  var tpl = document.getElementById('row-tpl');
+  var curEl = document.getElementById('cur');
+  var unit = 'btc';
+
+  function parseNum(s){
+    if(s==null) return NaN;
+    s = String(s).trim().replace(/\s/g,'');
+    if(!s) return NaN;
+    var lastComma = s.lastIndexOf(',');
+    var lastDot = s.lastIndexOf('.');
+    if(lastComma === -1 && lastDot === -1){ return parseFloat(s.replace(/[^0-9\-]/g,'')); }
+    var decSep = lastComma > lastDot ? ',' : '.';
+    var thouSep = decSep === ',' ? '.' : ',';
+    s = s.split(thouSep).join('');
+    s = s.replace(decSep, '.');
+    s = s.replace(/[^0-9.\-]/g,'');
+    return parseFloat(s);
+  }
+  function fmtMoney(n){ return '$' + Number(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function fmtBtc(n){ return Number(n).toLocaleString('es-AR',{maximumFractionDigits:8}); }
+  function sign(n){ return n>=0 ? '+' : '-'; }
+
+  function reindex(){
+    var rows = rowsEl.children;
+    for(var i=0;i<rows.length;i++){ rows[i].querySelector('.row-title').textContent = 'Compra ' + (i+1); }
+  }
+  function applyUnitToRow(r){
+    var label = r.querySelector('.amt-label');
+    var pre = r.querySelector('.amt-pre');
+    var amt = r.querySelector('.amt');
+    if(unit==='usdt'){ label.textContent='Monto (USDT)'; pre.textContent='$'; amt.placeholder='100'; }
+    else { label.textContent='Cantidad (BTC)'; pre.textContent='₿'; amt.placeholder='0.001'; }
+  }
+
+  function addRow(){
+    var node = tpl.content.firstElementChild.cloneNode(true);
+    rowsEl.appendChild(node);
+    node.querySelector('.del').addEventListener('click', function(){
+      if(rowsEl.children.length > 1){ node.remove(); reindex(); }
+      else { node.querySelector('.buy').value=''; node.querySelector('.amt').value=''; }
+      recalc();
+    });
+    var inputs = node.querySelectorAll('input');
+    for(var i=0;i<inputs.length;i++){ inputs[i].addEventListener('input', recalc); }
+    applyUnitToRow(node);
+    reindex();
+    recalc();
+  }
+
+  function recalc(){
+    var cur = parseNum(curEl.value);
+    var curValid = isFinite(cur) && cur > 0;
+    var totInv = 0, totNow = 0, anyValid = false;
+    var rows = rowsEl.children;
+
+    for(var i=0;i<rows.length;i++){
+      var r = rows[i];
+      var buy = parseNum(r.querySelector('.buy').value);
+      var amt = parseNum(r.querySelector('.amt').value);
+      var implied = r.querySelector('.implied');
+      var pnl = r.querySelector('.pnl');
+      var ok = isFinite(buy) && buy > 0 && isFinite(amt) && amt > 0;
+
+      if(!ok){ implied.textContent=''; pnl.textContent='—'; pnl.className='pnl'; continue; }
+
+      var btc, cost;
+      if(unit==='usdt'){ cost = amt; btc = amt / buy; implied.textContent = '≈ ' + fmtBtc(btc) + ' BTC'; }
+      else { btc = amt; cost = amt * buy; implied.textContent = 'Costo ' + fmtMoney(cost); }
+
+      totInv += cost; anyValid = true;
+
+      if(!curValid){ pnl.textContent='—'; pnl.className='pnl'; continue; }
+
+      var now = btc * cur;
+      var gain = now - cost;
+      var pct = (cur - buy) / buy * 100;
+      totNow += now;
+      pnl.textContent = sign(gain) + fmtMoney(Math.abs(gain)) + '  (' + sign(pct) + Math.abs(pct).toFixed(2) + '%)';
+      pnl.className = 'pnl ' + (gain>=0 ? 'up' : 'down');
+    }
+
+    renderTotals(totInv, totNow, anyValid, curValid);
+  }
+
+  function renderTotals(inv, now, anyValid, curValid){
+    var tInv = document.getElementById('t-inv');
+    var tNow = document.getElementById('t-now');
+    var tGain = document.getElementById('t-gain');
+    var tPct = document.getElementById('t-pct');
+    var hint = document.getElementById('t-hint');
+
+    if(!anyValid){
+      tInv.textContent='—'; tNow.textContent='—';
+      tGain.textContent='—'; tGain.className='t-gain';
+      tPct.textContent=''; tPct.className='t-pct';
+      hint.textContent='Cargá al menos una compra con precio y monto.';
+      return;
+    }
+    tInv.textContent = fmtMoney(inv);
+    if(!curValid){
+      tNow.textContent='—';
+      tGain.textContent='—'; tGain.className='t-gain';
+      tPct.textContent=''; tPct.className='t-pct';
+      hint.textContent='Ingresá el precio actual para ver la ganancia.';
+      return;
+    }
+    hint.textContent='';
+    tNow.textContent = fmtMoney(now);
+    var gain = now - inv;
+    var pct = inv > 0 ? gain / inv * 100 : 0;
+    var cls = gain>=0 ? 'up' : 'down';
+    tGain.textContent = sign(gain) + fmtMoney(Math.abs(gain));
+    tGain.className = 't-gain ' + cls;
+    tPct.textContent = sign(pct) + Math.abs(pct).toFixed(2) + '%';
+    tPct.className = 't-pct ' + cls;
+  }
+
+  var segBtns = document.querySelectorAll('.seg-btn');
+  for(var i=0;i<segBtns.length;i++){
+    segBtns[i].addEventListener('click', function(){
+      for(var j=0;j<segBtns.length;j++){ segBtns[j].classList.remove('active'); }
+      this.classList.add('active');
+      unit = this.getAttribute('data-unit');
+      var rows = rowsEl.children;
+      for(var k=0;k<rows.length;k++){ applyUnitToRow(rows[k]); }
+      recalc();
+    });
+  }
+
+  curEl.addEventListener('input', recalc);
+  document.getElementById('add').addEventListener('click', addRow);
+
+  addRow();
+  addRow();
+</script>
+</body>
+</html>
